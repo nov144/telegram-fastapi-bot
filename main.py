@@ -7,7 +7,7 @@ import os
 
 app = FastAPI()
 
-# 🔐 Экранируем токен для URL
+# Получаем переменные окружения
 WEBHOOK_BASE = os.getenv("WEBHOOK_URL")
 if not WEBHOOK_BASE:
     raise RuntimeError("❌ Переменная окружения WEBHOOK_URL не задана!")
@@ -26,8 +26,8 @@ async def on_startup():
         await bot.set_webhook(FULL_WEBHOOK_URL)
         print("✅ Webhook установлен:", FULL_WEBHOOK_URL)
 
-# 🔁 Маршрут должен точно совпадать с зашифрованным URL
-@app.post(f"/bot/{quote(TELEGRAM_BOT_TOKEN, safe='')}")
+# 🔐 Жёстко заданный маршрут, совпадающий с тем, что Telegram реально вызывает
+@app.post("/bot/7533256493%3AAAGEVcz3mj3kN02B1mucgYtcrzg5eAR1Y1I")
 async def receive_update(request: Request):
     data = await request.json()
     update = types.Update.model_validate(data)
