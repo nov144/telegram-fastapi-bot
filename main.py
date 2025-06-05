@@ -6,7 +6,6 @@ import os
 
 app = FastAPI()
 
-# Получаем базовый адрес Webhook из переменной окружения
 WEBHOOK_BASE = os.getenv("WEBHOOK_URL")
 if not WEBHOOK_BASE:
     raise RuntimeError("❌ WEBHOOK_URL не задан!")
@@ -20,21 +19,28 @@ print("➡️ FULL_WEBHOOK_URL:", FULL_WEBHOOK_URL)
 async def on_startup():
     await bot.delete_webhook(drop_pending_updates=True)
     await bot.set_webhook(FULL_WEBHOOK_URL)
-    print("✅ Надёжный Webhook установлен:", FULL_WEBHOOK_URL)
+    info = await bot.get_webhook_info()
+    print("📡 getWebhookInfo:", info)
 
-# Основной обработчик Webhook
 @app.post("/webhook")
 async def secure_webhook(request: Request):
-    # Проверка токена из query
+    print("🟢 Webhook triggered")
+
     token = request.query_params.get("token")
     if token != TELEGRAM_BOT_TOKEN:
+        print("🔒 Неверный токен в запросе")
         raise HTTPException(status_code=403, detail="Недействительный токен")
 
-    data = await request.json()
-    update = types.Update.model_validate(data)
-    Dispatcher.set_current(dp)
-    Bot.set_current(bot)
-    await dp.process_update(update)
+    try:
+        data = await request.json()
+        update = types.Update.model_validate(data)
+        Dispatcher.set_current(dp)
+        Bot.set_current(bot)
+        await dp.process_update(update)
+        print("✅ Update обработан")
+    except Exception as e:
+        print("❌ Ошибка при обработке webhook:", str(e))
+
     return {"ok": True}
 
 @app.get("/health")
