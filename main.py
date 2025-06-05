@@ -7,13 +7,13 @@ import os
 
 app = FastAPI()
 
-# 🔐 Безопасное формирование webhook URL
+# 🔐 Экранируем токен для URL
 WEBHOOK_BASE = os.getenv("WEBHOOK_URL")
 if not WEBHOOK_BASE:
     raise RuntimeError("❌ Переменная окружения WEBHOOK_URL не задана!")
 
 WEBHOOK_BASE = WEBHOOK_BASE.rstrip("/")
-TOKEN_SAFE = quote(TELEGRAM_BOT_TOKEN, safe="")  # Экранируем токен
+TOKEN_SAFE = quote(TELEGRAM_BOT_TOKEN, safe="")
 WEBHOOK_PATH = f"/bot/{TOKEN_SAFE}"
 FULL_WEBHOOK_URL = f"{WEBHOOK_BASE}{WEBHOOK_PATH}"
 
@@ -26,7 +26,8 @@ async def on_startup():
         await bot.set_webhook(FULL_WEBHOOK_URL)
         print("✅ Webhook установлен:", FULL_WEBHOOK_URL)
 
-@app.post(WEBHOOK_PATH)
+# 🔁 Маршрут должен точно совпадать с зашифрованным URL
+@app.post(f"/bot/{quote(TELEGRAM_BOT_TOKEN, safe='')}")
 async def receive_update(request: Request):
     data = await request.json()
     update = types.Update.model_validate(data)
