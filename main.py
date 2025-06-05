@@ -6,10 +6,17 @@ import os
 
 app = FastAPI()
 
-# Формируем корректный webhook URL
-WEBHOOK_BASE = os.getenv("WEBHOOK_URL", "").rstrip("/")
+# Получаем базовый адрес и проверяем
+WEBHOOK_BASE = os.getenv("WEBHOOK_URL")
+
+if not WEBHOOK_BASE:
+    raise RuntimeError("❌ Переменная окружения WEBHOOK_URL не задана!")
+
+WEBHOOK_BASE = WEBHOOK_BASE.rstrip("/")
 WEBHOOK_PATH = f"/bot/{TELEGRAM_BOT_TOKEN}"
 FULL_WEBHOOK_URL = f"{WEBHOOK_BASE}{WEBHOOK_PATH}"
+
+print("➡️ FULL_WEBHOOK_URL:", FULL_WEBHOOK_URL)
 
 @app.on_event("startup")
 async def on_startup():
