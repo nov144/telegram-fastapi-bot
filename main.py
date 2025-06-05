@@ -39,7 +39,7 @@ async def on_startup():
                 print("🔄 Ping Telegram OK:", me.username)
             except Exception as e:
                 print("⚠️ Ping Telegram FAIL:", e)
-            await asyncio.sleep(300)  # каждые 5 минут
+            await asyncio.sleep(118)  # каждые 5 минут
 
     asyncio.create_task(keep_alive())
 
