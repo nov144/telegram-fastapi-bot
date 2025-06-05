@@ -13,9 +13,6 @@ async def start_handler(message: Message):
     print("📥 Получен /start")
     await message.answer("Привет, я бот!")
 
-
-app = FastAPI()
-
 WEBHOOK_BASE = os.getenv("WEBHOOK_URL")
 if not WEBHOOK_BASE:
     raise RuntimeError("❌ WEBHOOK_URL не задан!")
