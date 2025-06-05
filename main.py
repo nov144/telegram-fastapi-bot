@@ -1,8 +1,18 @@
 from fastapi import FastAPI, Request, HTTPException
-from aiogram import types, Bot, Dispatcher
+from aiogram import types, Bot, Dispatcher, F
+from aiogram.types import Message
 from bot import bot, dp
 from config import TELEGRAM_BOT_TOKEN
 import os
+
+app = FastAPI()
+
+# ✅ Хендлер команды /start
+@dp.message(F.text == "/start")
+async def start_handler(message: Message):
+    print("📥 Получен /start")
+    await message.answer("Привет, я бот!")
+
 
 app = FastAPI()
 
