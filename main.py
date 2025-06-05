@@ -1,19 +1,21 @@
 from fastapi import FastAPI, Request, HTTPException
-from aiogram import types, F
+from aiogram import types, Bot, Dispatcher, F
 from aiogram.types import Message
 from bot import bot, dp
 from config import TELEGRAM_BOT_TOKEN
 import os
+import asyncio
+import httpx  # для пинга
 
 app = FastAPI()
 
-# ✅ Обработка команды /start
+# ✅ Хендлер команды /start
 @dp.message(F.text == "/start")
 async def start_handler(message: Message):
     print("📥 Получен /start")
     await message.answer("Привет, я бот!")
 
-# 📡 Webhook-URL
+# 🌍 Получаем URL из Render ENV
 WEBHOOK_BASE = os.getenv("WEBHOOK_URL")
 if not WEBHOOK_BASE:
     raise RuntimeError("❌ WEBHOOK_URL не задан!")
@@ -29,18 +31,32 @@ async def on_startup():
     await bot.set_webhook(FULL_WEBHOOK_URL)
     print("✅ Webhook установлен:", FULL_WEBHOOK_URL)
 
+    # 🟢 Запускаем фоновые пинги, чтобы Render не завершал процесс
+    asyncio.create_task(ping_forever())
+
+async def ping_forever():
+    while True:
+        try:
+            async with httpx.AsyncClient() as client:
+                resp = await client.get(f"{WEBHOOK_BASE}/health")
+                print("📡 ping /health:", resp.status_code)
+        except Exception as e:
+            print("❌ ping error:", e)
+        await asyncio.sleep(60)
+
 @app.post("/webhook")
 async def webhook(request: Request):
-    print("🟢 Webhook triggered")
-
     token = request.query_params.get("token")
     if token != TELEGRAM_BOT_TOKEN:
-        raise HTTPException(status_code=403, detail="Неверный токен")
+        raise HTTPException(status_code=403, detail="Недействительный токен")
 
-    data = await request.json()
-    update = types.Update.model_validate(data)
-    await dp.feed_update(bot, update)
-    print("✅ Обновление обработано")
+    try:
+        data = await request.json()
+        update = types.Update.model_validate(data)
+        await dp.feed_update(bot, update)
+        print("✅ Обновление обработано")
+    except Exception as e:
+        print("❌ Ошибка при обработке webhook:", e)
 
     return {"ok": True}
 
@@ -49,6 +65,7 @@ async def health():
     return {"status": "ok"}
 
 @app.on_event("shutdown")
-async def shutdown():
+async def on_shutdown():
     await bot.delete_webhook()
     await bot.session.close()
+
