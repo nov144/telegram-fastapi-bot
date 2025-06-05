@@ -2,17 +2,19 @@ from fastapi import FastAPI, Request
 from aiogram import types, Bot, Dispatcher
 from bot import bot, dp
 from config import TELEGRAM_BOT_TOKEN
+from urllib.parse import quote
 import os
 
 app = FastAPI()
 
-# Проверка и формирование webhook URL
+# 🔐 Безопасное формирование webhook URL
 WEBHOOK_BASE = os.getenv("WEBHOOK_URL")
 if not WEBHOOK_BASE:
     raise RuntimeError("❌ Переменная окружения WEBHOOK_URL не задана!")
 
 WEBHOOK_BASE = WEBHOOK_BASE.rstrip("/")
-WEBHOOK_PATH = f"/bot/{TELEGRAM_BOT_TOKEN}"
+TOKEN_SAFE = quote(TELEGRAM_BOT_TOKEN, safe="")  # Экранируем токен
+WEBHOOK_PATH = f"/bot/{TOKEN_SAFE}"
 FULL_WEBHOOK_URL = f"{WEBHOOK_BASE}{WEBHOOK_PATH}"
 
 print("➡️ FULL_WEBHOOK_URL:", FULL_WEBHOOK_URL)
