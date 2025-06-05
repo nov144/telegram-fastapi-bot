@@ -44,7 +44,8 @@ async def secure_webhook(request: Request):
     try:
         data = await request.json()
         update = types.Update.model_validate(data)
-        await dp.process_update(update)
+        await dp.feed_update(bot, update)
+
         print("✅ Update обработан")
     except Exception as e:
         print("❌ Ошибка при обработке webhook:", str(e))
