@@ -1,11 +1,15 @@
 from fastapi import FastAPI, Request
 from aiogram import types, Bot, Dispatcher
 from bot import bot, dp
-from config import TELEGRAM_BOT_TOKEN, WEBHOOK_URL
+from config import TELEGRAM_BOT_TOKEN
+import os
 
 app = FastAPI()
+
+# Формируем корректный webhook URL
+WEBHOOK_BASE = os.getenv("WEBHOOK_URL", "").rstrip("/")
 WEBHOOK_PATH = f"/bot/{TELEGRAM_BOT_TOKEN}"
-FULL_WEBHOOK_URL = f"{WEBHOOK_URL}{WEBHOOK_PATH}"
+FULL_WEBHOOK_URL = f"{WEBHOOK_BASE}{WEBHOOK_PATH}"
 
 @app.on_event("startup")
 async def on_startup():
