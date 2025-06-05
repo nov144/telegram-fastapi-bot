@@ -6,9 +6,8 @@ import os
 
 app = FastAPI()
 
-# Получаем базовый адрес и проверяем
+# Проверка и формирование webhook URL
 WEBHOOK_BASE = os.getenv("WEBHOOK_URL")
-
 if not WEBHOOK_BASE:
     raise RuntimeError("❌ Переменная окружения WEBHOOK_URL не задана!")
 
@@ -27,11 +26,11 @@ async def on_startup():
 
 @app.post(WEBHOOK_PATH)
 async def receive_update(request: Request):
-    update = await request.json()
-    telegram_update = types.Update(**update)
+    data = await request.json()
+    update = types.Update.model_validate(data)
     Dispatcher.set_current(dp)
     Bot.set_current(bot)
-    await dp.process_update(telegram_update)
+    await dp.process_update(update)
     return {"ok": True}
 
 @app.get("/health")
